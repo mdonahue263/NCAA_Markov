@@ -46,20 +46,31 @@ def foul_logic(game_df, idx, team_A, team_B):
     #Will need to amend if the shot is GOOD before the foul?
     #Confirmed - if shot is GOOD before the foul, then foul results in UNNEC and previous line results in f2 or f3
     #Also need to check timestamp before foul - can have GOOD shot on previous separate play
-    #may need to do same backwards iteration to find "valid plays"
+    #Can also have assist on previous play - switching to allow either possibility to result in UNNEC
+    #also adding buffer to time allowance because a GOOD 3-pointer can drain 2-3 seconds from clock
 
     current_play=game_df['PLAY'][idx]
     curr_time=game_df['TIME'][idx]
+    curr_time_split = curr_time.split(':')
+    curr_time_int = int(curr_time_split[0]) * 60 + int(curr_time_split[1])
+
+
     prev_play='Filler String'
     prev_time = 'Filler String'
 
     try:
         prev_play = game_df['PLAY'][idx-1]
         prev_time = game_df['TIME'][idx-1]
+        prev_time_split = prev_time.split(':')
+        prev_time_int = int(prev_time_split[0]) * 60 + int(prev_time_split[1])
+        
+        time_between = prev_time_int-curr_time_int
+
+
     except KeyError:
         pass
 
-    if ('GOOD' in prev_play) & (curr_time==prev_time):
+    if (('GOOD' in prev_play)|('Assist' in prev_play)) & (time_between<=3):
         new_state = 'UNNEC'
 
     #sadly, we need to account for subs and timeouts in between foul and FTs
@@ -211,18 +222,55 @@ def good_shot_logic(game_df, idx, team_A, team_B):
     current_time_int = int(current_time_split[0])*60 + int(current_time_split[1])
     next_time_int = int(next_time_split[0])*60 + int(next_time_split[1])
 
-    time_between = next_time_int - current_time_int
-    #### IF ASSIST, NEED TO CHECK FOLLOWING PLAY ##################################################################################
-    if (('Foul' in next_play)|('Assist' in next_play)) & (time_between <= 3):
+    time_between = current_time_int-next_time_int
+    
+    #check next play for foul
+    if ('Foul' in next_play) & (time_between <= 3):
         if team_A in current_play:
             new_state = 'Af{}'.format(str(pv))
         else:
             new_state = 'Bf{}'.format(str(pv))
+    #### IF ASSIST, NEED TO CHECK FOLLOWING PLAY
+    elif ('Assist' in next_play) & (time_between == 0):
+
+        #check folloing play for foul
+        following_play=game_df['PLAY'][idx+2]
+
+        if 'Foul' in following_play:
+
+            #measure time of following play
+            following_time=game_df['TIME'][idx+2]
+            following_time_split=following_time.split(':')
+            following_time_int = int(following_time_split[0])*60 + int(following_time_split[1])
+            time_between_2 = current_time_int-following_time_int
+
+            #check if foul is associated with GOOD shot - hopefully 3 second gap is right
+            if time_between_2 <= 3:
+                if team_A in current_play:
+                    new_state = 'Af{}'.format(str(pv))
+                else:
+                    new_state = 'Bf{}'.format(str(pv))
+
+#THIS SECTION REPEATS LOGIC - FUTURE CLEANUP
+            #if foul not associated, it's a regular "good" shot
+            else:
+                if team_A in current_play:
+                    new_state = 'Bi{}'.format(str(pv))
+                else:
+                    new_state = 'Ai{}'.format(str(pv))
+        else:
+            if team_A in current_play:
+                new_state = 'Bi{}'.format(str(pv))
+            else:
+                new_state = 'Ai{}'.format(str(pv))
+
+    #if no assist or foul, it is a regular "good" shot
     else:
         if team_A in current_play:
             new_state = 'Bi{}'.format(str(pv))
         else:
             new_state = 'Ai{}'.format(str(pv))
+#END REPEAT LOGIC SECTION
     return new_state
 
 
