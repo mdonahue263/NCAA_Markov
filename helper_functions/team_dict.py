@@ -5,11 +5,15 @@ team_abbr = {1628:'Nevada',
          1457:'CU',
          488:'Butler',
          1863:'ASU',
-         211:'ULM'}
+         211:'ULM',
+         1808:'Gonzaga',
+         1317: "Saint Mary's (CA)"}
 
 team_name = {1628:'Nevada',
              260:'San Jose State',
              1457:'Creighton',
              488:'Butler',
              1863:'Arkansas State',
-             211:'University of Louisiana Monroe'}
+             211:'University of Louisiana Monroe',
+             1808:'Gonz',
+             1317:'SMC'}

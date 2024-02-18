@@ -1,6 +1,9 @@
 import requests
 import json
 import pandas as pd
+import regex as re
+from collections import Counter
+
 
 def pull_game(game_id):
     """
@@ -35,8 +38,17 @@ def pull_game(game_id):
     if json_copy == {'Message': 'Object not found.'}:
         raise Exception("Invalid game_id or future game_id")
     
+
+    #Pulling some metadata to try to save unique files
+
     #pull date
-    date=json_copy['updatedTimestamp']
+    # date_pull=json_copy['updatedTimestamp']
+
+    #desc
+    desc = json_copy['meta']['description']
+
+    #concat strings for identifier
+    id_string = str(game_id) + '_' + desc
     
     #pull data from json object
     meta_info = json_copy['meta']['teams']
@@ -47,10 +59,6 @@ def pull_game(game_id):
     team_data = pd.DataFrame([team1,team2],columns=['home','id','name'])
 
     game=json_copy['periods']
-    
-    #don't yet know how to handle overtime
-    if len(game) != 2:
-        raise ValueError
     
     first_half=game[0]
     second_half=game[1]
@@ -128,7 +136,50 @@ def pull_game(game_id):
                                       'Home':home_score,
                                   'PLAY':all_text},index=[0])
         box_score=pd.concat([box_score,current_state])
+
+    if len(game)>2:
+        ot_per = 0
+        for item1 in game[2:]:
+            ot_per += 1
+            for item in item1['playStats']:
+                score=item['score']
+                time=item['time']
+                v_text=item['visitorText']
+                h_text=item['homeText']
+                if len(score) == 0:
+                        home_score=home_score
+                        away_score=away_score
+                else:
+                    scoring_started=True
+                    away_score, home_score = score.split('-')
+                    away_score=int(away_score)
+                    home_score=int(home_score)
+
+                if len(h_text) == 0:
+                    all_text = v_text
+                else:
+                    all_text = h_text
+                    
+                half=ot_per
+
+                current_state = pd.DataFrame({'Period':half,
+                                            'TIME':time,
+                                            'Away':away_score,
+                                            'Home':home_score,
+                                        'PLAY':all_text},index=[0])
+                box_score=pd.concat([box_score,current_state])
+
         
         
     box_score=box_score.reset_index(drop=True)
-    return {'data': box_score, 'teams': team_data}
+
+        #attempting logic for team abbreviation...
+
+    concat_text = ' '.join(list(box_score['PLAY']))
+
+    apostrophe_preceders  = re.findall(r'\b([a-zA-Z0-9]+)\'', concat_text)
+    abbrev_guesses = list(Counter(apostrophe_preceders))[:2]
+
+    team_data['abbreviations'] = abbrev_guesses
+
+    return {'data': box_score, 'teams': team_data, 'id': id_string}

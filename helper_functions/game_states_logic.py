@@ -213,8 +213,16 @@ def good_shot_logic(game_df, idx, team_A, team_B):
     current_time = game_df['TIME'][idx]
 
     #this will fail if it is last play of game
-    next_play = game_df['PLAY'][idx+1]
-    next_time = game_df['TIME'][idx+1]
+
+    try:
+        next_play = game_df['PLAY'][idx+1]
+        next_time = game_df['TIME'][idx+1]
+    except Exception:
+        if team_A in current_play:
+            new_state = 'Bi{}'.format(str(pv))
+        elif team_B in current_play:
+            new_state = 'Ai{}'.format(str(pv))
+        return new_state
 
     current_time_split = current_time.split(':')
     next_time_split = next_time.split(':')
