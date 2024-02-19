@@ -10,13 +10,49 @@ def get_play_states(game_df, team_A, team_B):
 
     returns: new_states: list of states
     """
-    new_states = []
 
-    for idx in range(len(game_df)):
-        new_states.append(perform_logic(game_df, idx, team_A, team_B))
+    periods = []
+
+    for per in list(game_df['Period'].unique()):
+        current_period=game_df[game_df['Period']==per].copy().reset_index(drop=True)
+        new_states = []
+        times=[]
+
+        new_states.append(find_starting_state(current_period, team_A, team_B))
+        if (per == 1) | (per == 2):
+            times.append('20:00')
+        else:
+            times.append('5:00')
+
+        for idx in range(len(current_period)):
+            new_states.append(perform_logic(current_period, idx, team_A, team_B))
+            times.append(current_period['TIME'][idx])
+        periods.append(list(zip(new_states,times)))
     
     
-    return new_states
+    return periods
+
+def find_starting_state(game_df, team_A, team_B):
+    play_iter = 0
+    done=False
+    while not done:
+        first_play = game_df['PLAY'][play_iter]
+        if ('MISSED by' in first_play) | ('GOOD by' in first_play)| ('Turnover' in first_play) | ('takes a' in first_play):
+            if team_A in first_play:
+                return 'Ai0'
+            else:
+                return 'Bi0'
+        elif 'Foul' in first_play: #bad logic but will pass - let's just say first play foul is always defensive
+            if team_A in first_play:
+                return 'Bi0'
+            else:
+                return 'Ai0'
+        elif 'Subbing' in first_play:
+            play_iter += 1
+        else:
+            print('Unknown first play:')
+            print(first_play)
+            raise Exception
 
 def is_unnec(play):
     """
@@ -26,7 +62,7 @@ def is_unnec(play):
     return: BOOL, True if unnecessary
     """
 
-    bad_words = ['MISSED','Steal','Assist','Block','Subbing','timeout','time out']
+    bad_words = ['MISSED','Steal','Assist','Block','Subbing','timeout','time out', 'TIMEOUT']
     matching=re.compile('|'.join(bad_words))
 
     if matching.search(play):
@@ -66,9 +102,10 @@ def foul_logic(game_df, idx, team_A, team_B):
         
         time_between = prev_time_int-curr_time_int
 
-
+    #We encounter this exception when the first play of the game is a foul. In STARTING STATE logic,
+        #we assume every first foul is a defensive one, so doing the same here
     except KeyError:
-        pass
+        return 'UNNEC'
 
     if (('GOOD' in prev_play)|('Assist' in prev_play)) & (time_between<=3):
         new_state = 'UNNEC'
@@ -79,7 +116,17 @@ def foul_logic(game_df, idx, team_A, team_B):
         play_iterator=1
         valid_play = False
         while not valid_play:
-            next_play = game_df['PLAY'][idx+play_iterator]
+            try:
+                #if we encounter a key error here, that means the game ended on this foul
+                next_play = game_df['PLAY'][idx+play_iterator]
+            except KeyError:
+                if team_A in current_play:
+                    return 'Bi0'
+                elif team_B in current_play:
+                    return 'Ai0'
+            #otherwise, check next play
+                
+
             if ('Sub' in next_play) | ('timeout' in next_play) | ('time out' in next_play):
                 valid_play=False
                 play_iterator+=1
@@ -116,7 +163,15 @@ def free_throw_good_logic(game_df, idx, team_A, team_B):
     valid_play = False
 
     while not valid_play:
-        next_play = game_df['PLAY'][idx+play_iterator]
+        try:
+            next_play = game_df['PLAY'][idx+play_iterator]
+        #if KEYERROR - it is likely last play of game, just return opposite team inbound
+        except KeyError:
+            if team_A in current_play:
+                new_state = 'Bi1'
+            else:
+                new_state = 'Ai1'
+            return new_state
         if ('Sub' in next_play) | ('timeout' in next_play) | ('time out' in next_play):
             valid_play=False
             play_iterator+=1
@@ -242,7 +297,16 @@ def good_shot_logic(game_df, idx, team_A, team_B):
     elif ('Assist' in next_play) & (time_between == 0):
 
         #check folloing play for foul
-        following_play=game_df['PLAY'][idx+2]
+        #if KEYERROR - it is likely last play of game, just return opposite team inbound
+        try:
+            following_play=game_df['PLAY'][idx+2]
+        except KeyError:
+            if team_A in current_play:
+                new_state = 'Bi{}'.format(str(pv))
+            else:
+                new_state = 'Ai{}'.format(str(pv))
+            return new_state
+
 
         if 'Foul' in following_play:
 

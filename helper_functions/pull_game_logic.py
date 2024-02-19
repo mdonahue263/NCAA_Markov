@@ -4,6 +4,9 @@ import pandas as pd
 import regex as re
 from collections import Counter
 
+class WrongSportException(Exception):
+    pass
+
 
 def pull_game(game_id):
     """
@@ -29,7 +32,7 @@ def pull_game(game_id):
     cont = r.content
     
     if ('Layup' not in str(cont)) and ('layup' not in str(cont)) and ('LAYUP' not in str(cont)):
-        raise Exception('This may be the wrong sport')
+        raise WrongSportException('This may be the wrong sport')
     
     
     
