@@ -107,7 +107,8 @@ def foul_logic(game_df, idx, team_A, team_B):
     except KeyError:
         return 'UNNEC'
 
-    if (('GOOD' in prev_play)|('Assist' in prev_play)) & (time_between<=3):
+    #time between <= 3 was causing problems - try replacing with 2
+    if (('GOOD' in prev_play)|('Assist' in prev_play)) & (time_between<=1):
         new_state = 'UNNEC'
 
     #sadly, we need to account for subs and timeouts in between foul and FTs
@@ -288,7 +289,9 @@ def good_shot_logic(game_df, idx, team_A, team_B):
     time_between = current_time_int-next_time_int
     
     #check next play for foul
-    if ('Foul' in next_play) & (time_between <= 3):
+    #maybe use PV as upper limit for time_between? 3-pointer can hang in the air up to three seconds?
+    #or new function to map 2 to 1 and 3 to 3
+    if ('Foul' in next_play) & (time_between <= 1):
         if team_A in current_play:
             new_state = 'Af{}'.format(str(pv))
         else:
@@ -316,8 +319,8 @@ def good_shot_logic(game_df, idx, team_A, team_B):
             following_time_int = int(following_time_split[0])*60 + int(following_time_split[1])
             time_between_2 = current_time_int-following_time_int
 
-            #check if foul is associated with GOOD shot - hopefully 3 second gap is right
-            if time_between_2 <= 3:
+            #check if foul is associated with GOOD shot - hopefully 1 second gap is right
+            if time_between_2 <= 1:
                 if team_A in current_play:
                     new_state = 'Af{}'.format(str(pv))
                 else:
