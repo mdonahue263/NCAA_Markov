@@ -40,7 +40,7 @@ def simulate_game(transition_matrix, num_games = 1, verbose = False):
             next_state = choose_ending_state(transition_matrix, current_state)
             transition = (current_state, next_state)
             possible_times = time_dict[transition]
-            time_elapsed = np.random.choice(possible_times['Time'])
+            time_elapsed = np.random.choice(possible_times)
 
             time_remaining-=time_elapsed
 
@@ -66,7 +66,7 @@ def simulate_game(transition_matrix, num_games = 1, verbose = False):
             next_state = choose_ending_state(transition_matrix, current_state)
             transition = (current_state, next_state)
             possible_times = time_dict[transition]
-            time_elapsed = np.random.choice(possible_times['Time'])
+            time_elapsed = np.random.choice(possible_times)
 
             time_remaining-=time_elapsed
 
@@ -109,7 +109,7 @@ def simulate_game(transition_matrix, num_games = 1, verbose = False):
                 next_state = choose_ending_state(transition_matrix, current_state)
                 transition = (current_state, next_state)
                 possible_times = time_dict[transition]
-                time_elapsed = np.random.choice(possible_times['Time'])
+                time_elapsed = np.random.choice(possible_times)
 
                 time_remaining-=time_elapsed
 
@@ -139,6 +139,6 @@ def simulate_game(transition_matrix, num_games = 1, verbose = False):
                     print('Game number {}'.format(nth_game+1))
                     print('Final score: {} - {}'.format(a_score, b_score))
         scores.append((a_score, b_score))
+        final_df['Game Number'] = nth_game + 1
         outer_df = pd.concat([outer_df, final_df])
-        outer_df['Game Number'] = nth_game + 1
     return outer_df, scores
