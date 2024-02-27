@@ -1,4 +1,6 @@
 import pandas as pd
+avg_matrix = pd.read_excel('avg_transition_matrix_with_manual_edits.xlsx', sheet_name='Mean Pasted', index_col='Starting_State')
+
 
 def combine_team_matrix(t1, t2, strat = 1):
     if strat == 1:
@@ -8,6 +10,10 @@ def combine_team_matrix(t1, t2, strat = 1):
         combined_transitions = pd.concat([h1,h2], axis=1)
     elif strat == 2:
         combined_transitions = (t1 + t2)/2
+
+    for r in combined_transitions.index:
+        if combined_transitions.loc[r].sum()==0:
+            combined_transitions.loc[r]=avg_matrix.loc[r].copy()
 
     combined_transitions = combined_transitions.div(combined_transitions.sum(axis=1), axis=0)
     return combined_transitions
