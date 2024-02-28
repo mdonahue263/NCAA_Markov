@@ -17,7 +17,7 @@ scoring['Transition']=clean_transition_column(scoring['Transition'])
 
 scoring_dict = dict()
 for t in scoring['Transition'].values:
-    scoring_dict[t] = scoring[scoring['Transition']==t]
+    scoring_dict[t] = scoring[scoring['Transition']==t].copy()
 
 def choose_ending_state(t_matrix, state):
     # Get the row corresponding to the starting state
@@ -63,7 +63,7 @@ def simulate_game(transition_matrix, num_games = 1, verbose = False, diagnose_ti
             time_remaining-=time_elapsed
             t_sim_3=time.time()
 
-            play_score = scoring_dict[transition].copy()
+            play_score = scoring_dict[transition]
             t_sim_4 = time.time()
             play_score['Time'] = time_remaining
             first_half_events_list.append(play_score)
@@ -106,8 +106,9 @@ def simulate_game(transition_matrix, num_games = 1, verbose = False, diagnose_ti
             t_sim_3=time.time()
 
             play_score = scoring_dict[transition].copy()
-            play_score['Time'] = time_remaining
             t_sim_4 = time.time()
+            play_score['Time'] = time_remaining
+            
             # second_half_events = pd.concat([second_half_events, play_score])
             second_half_events_list.append(play_score)
             t_sim_5 = time.time()
