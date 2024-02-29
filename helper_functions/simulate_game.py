@@ -4,8 +4,10 @@ import time
 from helper_functions.clean_transitions import clean_transition_column
 from tqdm import tqdm
 
-transition_times = pd.read_excel('Transition_times_reduced_v03.xlsx')
+transition_times = pd.read_excel('Transition_times_reduced_v05.xlsx')
 transition_times['Transition'] = clean_transition_column(transition_times['Transition'])
+
+
 
 #reduce time it takes by turning transition times into dict
 time_dict = dict()
