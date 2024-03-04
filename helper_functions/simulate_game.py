@@ -52,10 +52,10 @@ def simulate_game(transition_matrix, num_games = 1, verbose = False, diagnose_ti
             
 
         #speed up half events by concatenating once after all events are in a list
-        # first_half_events_list = []
+        first_half_events_list = []
         #trying to correct output dataframe order
         #seems that when we use list method, order gets shuffled
-        first_half_events=pd.DataFrame()
+        # first_half_events=pd.DataFrame()
         while time_remaining >= 0:
             t_sim_start=time.time()
             next_state = choose_ending_state(transition_matrix, current_state)
@@ -72,8 +72,8 @@ def simulate_game(transition_matrix, num_games = 1, verbose = False, diagnose_ti
             t_sim_4 = time.time()
             play_score['Time'] = time_remaining
             play_score=play_score.reset_index(drop=True)
-            # first_half_events_list.append(play_score)
-            first_half_events = pd.concat([first_half_events, play_score]).reset_index(drop=True)
+            first_half_events_list.append(play_score)
+            # first_half_events = pd.concat([first_half_events, play_score]).reset_index(drop=True)
             t_sim_5 = time.time()
             current_state = next_state
             #if diagnose time is true, add line to sim time df
@@ -84,7 +84,7 @@ def simulate_game(transition_matrix, num_games = 1, verbose = False, diagnose_ti
                                         't4':t_sim_4-t_sim_3,
                                         't5':t_sim_5-t_sim_4}, index=[0])
                 sim_time_df = pd.concat([sim_time_df, curr_df])
-        # first_half_events = pd.concat(first_half_events_list)
+        first_half_events = pd.concat(first_half_events_list)
         # print(first_half_events_list)
 
         if verbose:
