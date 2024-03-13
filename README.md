@@ -51,3 +51,17 @@ Don't use:
 #UNT Dallas 506547
 #Coker USCU?
 #error with game 6198622
+
+3/9/2024
+REMINDER - process for pulling in new games
+1. open save_down_all_games
+2. poke around on ncaa to find new limit of game indices
+3. run save_down_all_games with new indices
+4. open save_valid_transitinos_expanded
+5. ensure pulling latest ALL VALID TRANSITIONS file
+6. run PROCESS NEW GAMES cell and make necessary changes to game files
+7. save down as new version of ALL VALID TRANSITIONS
+8. Open save_valid_transition_times_expanded
+9. run and save new version of output
+10. open all_individual_team_stats latest version
+11. Run - this will re save each team's data. not optimized to check if teams have new data. That's okay.

@@ -11,6 +11,8 @@ def combine_team_matrix(t1, t2, strat = 1):
     elif strat == 2:
         combined_transitions = (t1 + t2)/2
 
+    combined_transitions=combined_transitions[avg_matrix.columns]
+
     for r in combined_transitions.index:
         if combined_transitions.loc[r].sum()==0:
             combined_transitions.loc[r]=avg_matrix.loc[r].copy()
