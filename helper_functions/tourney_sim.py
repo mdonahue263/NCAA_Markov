@@ -26,8 +26,10 @@ def matchup(team_A, team_B, strategy='sim', reps=1, argmax=False):
         transition_matrix = combine_team_matrix(matrix_A, matrix_B)
         result = simulate_game(transition_matrix, reps)
         return result[1]
-    elif strategy == 'nn1':
-        return nn_output(nn1, team_A, team_B, reps, argmax)
+    else:
+        with open('models/{}.pickle'.format(strategy), 'rb') as file:
+            model=pickle.load(file)
+        return nn_output(model, team_A, team_B, reps, argmax)
     
 def nn_output(model, team_A, team_B, num_sims, argmax=False):
     #Pull and Convert test matrices to numpy arrays
