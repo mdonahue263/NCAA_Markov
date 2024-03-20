@@ -15,26 +15,36 @@ with open('helper_functions/std_input_matrix.pickle', 'rb') as file:
 with open('models/nn1.pickle', 'rb') as file:
     nn1=pickle.load(file)
 
+matrix_A_dict = dict()
+matrix_B_dict = dict()
+
+for file in tqdm(os.listdir('team_specific_matrix')):
+    team,ab = file.split('_')
+    if ab == 'A.xlsx':
+        matrix_A_dict[team] = pd.read_excel('team_specific_matrix/{}'.format(file), index_col='Starting_State')
+    elif ab == 'B.xlsx':
+        matrix_B_dict[team] = pd.read_excel('team_specific_matrix/{}'.format(file), index_col='Starting_State')
+    else:
+        raise ValueError
 
 
 
-def matchup(team_A, team_B, strategy='sim', reps=1, argmax=False):
-    matrix_A = pd.read_excel('team_specific_matrix/{}_A.xlsx'.format(team_A), index_col='Starting_State')
-    matrix_B = pd.read_excel('team_specific_matrix/{}_B.xlsx'.format(team_B), index_col='Starting_State')
+def matchup(team_A, team_B, strategy='sim', reps=1, argmax=False, model=None):
 
     if strategy == 'sim':
+        matrix_A = pd.read_excel('team_specific_matrix/{}_A.xlsx'.format(team_A), index_col='Starting_State')
+        matrix_B = pd.read_excel('team_specific_matrix/{}_B.xlsx'.format(team_B), index_col='Starting_State')
         transition_matrix = combine_team_matrix(matrix_A, matrix_B)
         result = simulate_game(transition_matrix, reps)
         return result[1]
     else:
-        with open('models/{}.pickle'.format(strategy), 'rb') as file:
-            model=pickle.load(file)
-        return nn_output(model, team_A, team_B, reps, argmax)
+        m=model
+        return nn_output(m, team_A, team_B, reps, argmax)
     
 def nn_output(model, team_A, team_B, num_sims, argmax=False):
     #Pull and Convert test matrices to numpy arrays
-    matrix_A_raw = pd.read_excel('team_specific_matrix/{}_A.xlsx'.format(team_A), index_col='Starting_State')
-    matrix_B_raw = pd.read_excel('team_specific_matrix/{}_B.xlsx'.format(team_B), index_col='Starting_State')
+    matrix_A_raw = matrix_A_dict[team_A]
+    matrix_B_raw = matrix_B_dict[team_B]
 
 
     matrix_A_normal = (matrix_A_raw - avg_input_matrix) / std_input_matrix
@@ -73,12 +83,15 @@ def nn_output(model, team_A, team_B, num_sims, argmax=False):
 
         return list(zip(home_scores, away_scores))
     
-def simulate_tournament(strategy='sim', reps=10):
+def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
     """
     Simualte entire tournament.
     Strategy: currently sim or nn1
     Reps: number of times to simulate each game
     """
+
+    #new addition 3-19 - make winners list so we can simulate and save each unique outcome
+    winner_list = []
 
     te1='UConn'
     te2='Iowa St.'
@@ -112,7 +125,7 @@ def simulate_tournament(strategy='sim', reps=10):
     tw13='Col. of Charleston'
     tw14='Colgate'
     tw15='Long Beach St.'
-    tw16='Howard'
+    tw16='Wagner'
 
     ts1='Houston'
     ts2 = 'Marquette'
@@ -148,7 +161,10 @@ def simulate_tournament(strategy='sim', reps=10):
     tm15="Saint Peter's"
     tm16='Grambling'
 
-    validate_entries=input('Play ins: Howard, Boise State, Grambling, and UVA ok? y/n ')
+    if auto:
+        validate_entries = 'y'
+    else:
+        validate_entries=input('Play ins: Howard, Boise State, Grambling, and UVA ok? y/n ')
     if validate_entries == 'y':
         pass
     else:
@@ -228,22 +244,24 @@ def simulate_tournament(strategy='sim', reps=10):
             print('Matchup: {} vs. {}'.format(match[0], match[1]))
 
             #simulate matchup from both sides and put in one list, find mean
-            res=matchup(match[0],match[1], strategy, reps)
+            res=matchup(match[0],match[1], strategy, reps, model=model)
             w1=[x[0]>x[1] for x in res]
-            res2=matchup(match[1],match[0], strategy, reps)
+            res2=matchup(match[1],match[0], strategy, reps, model=model)
             w2=[x[0]<x[1] for x in res]
             winners = np.mean(w1+w2)
 
             #if even, do one extra simulation
             if winners == 0.5:
-                res=matchup(match[0],match[1], strategy)
+                res=matchup(match[0],match[1], strategy, model=model)
                 winners=res[0][0]>res[0][1]
             if winners > 0.5:
                 print('{} wins'.format(match[0]))
                 second_round[division_number].append(match[0])
+                winner_list.append(match[0])
             else:
                 print('{} wins'.format(match[1]))
                 second_round[division_number].append(match[1])
+                winner_list.append(match[1])
             print()
         print('-------------------------------------------------------------------------')
 
@@ -263,22 +281,24 @@ def simulate_tournament(strategy='sim', reps=10):
             print('Matchup: {} vs. {}'.format(match[0], match[1]))
 
             #simulate matchup from both sides and put in one list, find mean
-            res=matchup(match[0],match[1], strategy, reps)
+            res=matchup(match[0],match[1], strategy, reps, model=model)
             w1=[x[0]>x[1] for x in res]
-            res2=matchup(match[1],match[0], strategy, reps)
+            res2=matchup(match[1],match[0], strategy, reps, model=model)
             w2=[x[0]<x[1] for x in res]
             winners = np.mean(w1+w2)
 
             #if even, do one extra simulation
             if winners == 0.5:
-                res=matchup(match[0],match[1], strategy)
+                res=matchup(match[0],match[1], strategy, model=model)
                 winners=res[0][0]>res[0][1]
             if winners > 0.5:
                 print('{} wins'.format(match[0]))
                 third_round[division_number].append(match[0])
+                winner_list.append(match[0])
             else:
                 print('{} wins'.format(match[1]))
                 third_round[division_number].append(match[1])
+                winner_list.append(match[1])
             print()
         print('----------------------------------------------------------------')
 
@@ -299,22 +319,24 @@ def simulate_tournament(strategy='sim', reps=10):
             print('Matchup: {} vs. {}'.format(match[0], match[1]))
 
             #simulate matchup from both sides and put in one list, find mean
-            res=matchup(match[0],match[1], strategy, reps)
+            res=matchup(match[0],match[1], strategy, reps, model=model)
             w1=[x[0]>x[1] for x in res]
-            res2=matchup(match[1],match[0], strategy, reps)
+            res2=matchup(match[1],match[0], strategy, reps, model=model)
             w2=[x[0]<x[1] for x in res]
             winners = np.mean(w1+w2)
 
             #if even, do one extra simulation
             if winners == 0.5:
-                res=matchup(match[0],match[1], strategy)
+                res=matchup(match[0],match[1], strategy, model=model)
                 winners=res[0][0]>res[0][1]
             if winners > 0.5:
                 print('{} wins'.format(match[0]))
                 fourth_round[division_number].append(match[0])
+                winner_list.append(match[0])
             else:
                 print('{} wins'.format(match[1]))
                 fourth_round[division_number].append(match[1])
+                winner_list.append(match[1])
             print()
         print('------------------------------------------------------------------')
 
@@ -324,22 +346,24 @@ def simulate_tournament(strategy='sim', reps=10):
         print('Matchup: {} vs. {}'.format(match[0], match[1]))
 
         #simulate matchup from both sides and put in one list, find mean
-        res=matchup(match[0],match[1], strategy, reps)
+        res=matchup(match[0],match[1], strategy, reps, model=model)
         w1=[x[0]>x[1] for x in res]
-        res2=matchup(match[1],match[0], strategy, reps)
+        res2=matchup(match[1],match[0], strategy, reps, model=model)
         w2=[x[0]<x[1] for x in res]
         winners = np.mean(w1+w2)
 
         #if even, do one extra simulation
         if winners == 0.5:
-            res=matchup(match[0],match[1], strategy)
+            res=matchup(match[0],match[1], strategy, model=model)
             winners=res[0][0]>res[0][1]
         if winners > 0.5:
             print('{} wins'.format(match[0]))
             final_four.append(match[0])
+            winner_list.append(match[0])
         else:
             print('{} wins'.format(match[1]))
             final_four.append(match[1])
+            winner_list.append(match[1])
         print()
 
     #FINAL FOUR
@@ -349,22 +373,24 @@ def simulate_tournament(strategy='sim', reps=10):
     print('Matchup: {} vs. {}'.format(team_A, team_B))
 
     #simulate matchup from both sides and put in one list, find mean
-    res=matchup(team_A,team_B, strategy, reps)
+    res=matchup(team_A,team_B, strategy, reps, model=model)
     w1=[x[0]>x[1] for x in res]
-    res2=matchup(team_B,team_A, strategy, reps)
+    res2=matchup(team_B,team_A, strategy, reps, model=model)
     w2=[x[0]<x[1] for x in res]
     winners = np.mean(w1+w2)
 
     #if even, do one extra simulation
     if winners == 0.5:
-        res=matchup(team_A,team_B,strategy)
+        res=matchup(team_A,team_B,strategy, model=model)
         winners=res[0][0]>res[0][1]
     if winners > 0.5:
         print('{} wins'.format(team_A))
         finals.append(team_A)
+        winner_list.append(team_A)
     else:
         print('{} wins'.format(team_B))
         finals.append(team_B)
+        winner_list.append(team_B)
     print()
 
     team_A = final_four[2]
@@ -372,22 +398,24 @@ def simulate_tournament(strategy='sim', reps=10):
     print('Matchup: {} vs. {}'.format(team_A, team_B))
 
     #simulate matchup from both sides and put in one list, find mean
-    res=matchup(team_A,team_B, strategy, reps)
+    res=matchup(team_A,team_B, strategy, reps, model=model)
     w1=[x[0]>x[1] for x in res]
-    res2=matchup(team_B,team_A, strategy, reps)
+    res2=matchup(team_B,team_A, strategy, reps, model=model)
     w2=[x[0]<x[1] for x in res]
     winners = np.mean(w1+w2)
 
     #if even, do one extra simulation
     if winners == 0.5:
-        res=matchup(team_A,team_B, strategy)
+        res=matchup(team_A,team_B, strategy, model=model)
         winners=res[0][0]>res[0][1]
     if winners > 0.5:
         print('{} wins'.format(team_A))
         finals.append(team_A)
+        winner_list.append(team_A)
     else:
         print('{} wins'.format(team_B))
         finals.append(team_B)
+        winner_list.append(team_B)
     print()
 
 
@@ -397,9 +425,9 @@ def simulate_tournament(strategy='sim', reps=10):
     print('Matchup: {} vs. {}'.format(finals[0], finals[1]))
 
     #simulate matchup from both sides and put in one list, find mean
-    res=matchup(finals[0],finals[1], strategy, reps)
+    res=matchup(finals[0],finals[1], strategy, reps, model=model)
     w1=[x[0]>x[1] for x in res]
-    res2=matchup(finals[1],finals[0], strategy, reps)
+    res2=matchup(finals[1],finals[0], strategy, reps, model=model)
     w2=[x[0]<x[1] for x in res]
     winners = np.mean(w1+w2)
 
@@ -412,15 +440,16 @@ def simulate_tournament(strategy='sim', reps=10):
 
     #if even, do one extra simulation
     if winners == 0.5:
-        res=matchup(finals[0],finals[1], strategy)
+        res=matchup(finals[0],finals[1], strategy, model=model)
         total_ou += res[0][0] + res[0][1]
         total_reps+=1
         winners=res[0][0]>res[0][1]
     if winners > 0.5:
         print('{} wins'.format(finals[0]))
-        final_four.append(finals[0])
+        winner_list.append(finals[0])
     else:
         print('{} wins'.format(finals[1]))
-        final_four.append(finals[1])
+        winner_list.append(finals[1])
     print()
     print('Tiebreaker O/U: {}'.format(total_ou//total_reps))
+    return winner_list
