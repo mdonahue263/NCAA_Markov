@@ -153,7 +153,7 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
     tm7='Texas'
     tm8='Utah St.'
     tm9='TCU'
-    tm10='Virginia'
+    tm10='Colorado St.'
     tm11='Oregon'
     tm12='McNeese'
     tm13='Samford'
