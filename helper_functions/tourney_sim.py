@@ -136,7 +136,7 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
     ts7='Florida'
     ts8='Nebraska'
     ts9='Texas A&M'
-    ts10='Boise St.'
+    ts10='Colorado'
     ts11='NC State'
     ts12='James Madison'
     ts13='Vermont'
@@ -161,38 +161,6 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
     tm15="Saint Peter's"
     tm16='Grambling'
 
-    if auto:
-        validate_entries = 'y'
-    else:
-        validate_entries=input('Play ins: Howard, Boise State, Grambling, and UVA ok? y/n ')
-    if validate_entries == 'y':
-        pass
-    else:
-        h_w = input('Howard or Wagner? h/w ')
-        if h_w == 'h':
-            tw16='Howard'
-        elif h_w == 'w':
-            tw16 = 'Wagner'
-
-        b_c = input('Boise State or Colorado? b/c ')
-        if b_c == 'b':
-            ts10='Boise St.'
-        elif b_c == 'c':
-            ts10 = 'Colorado'
-        
-        g_m = input('Grambling or Montana St? g/m ')
-        if g_m == 'g':
-            tm16 = 'Grambling'
-        elif g_m == 'm':
-            tm16='Montana St.'
-
-        v_c = input('UVA or Colorado State? v/c ')
-        if v_c == 'v':
-            tm10='Virginia'
-        elif v_c == 'c':
-            tm10 = 'Colorado St.'
-
-    
     eastern_bracket = [(te1,te16),
                         (te8,te9),
                         (te5,te12),
@@ -241,7 +209,8 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
 
     for division_number in range(len(first_round)):
         for match in first_round[division_number]:
-            print('Matchup: {} vs. {}'.format(match[0], match[1]))
+            if not auto:
+                print('Matchup: {} vs. {}'.format(match[0], match[1]))
 
             #simulate matchup from both sides and put in one list, find mean
             res=matchup(match[0],match[1], strategy, reps, model=model)
@@ -255,15 +224,19 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
                 res=matchup(match[0],match[1], strategy, model=model)
                 winners=res[0][0]>res[0][1]
             if winners > 0.5:
-                print('{} wins'.format(match[0]))
+                if not auto:
+                    print('{} wins'.format(match[0]))
                 second_round[division_number].append(match[0])
                 winner_list.append(match[0])
             else:
-                print('{} wins'.format(match[1]))
+                if not auto:
+                    print('{} wins'.format(match[1]))
                 second_round[division_number].append(match[1])
                 winner_list.append(match[1])
-            print()
-        print('-------------------------------------------------------------------------')
+            if not auto:
+                print()
+        if not auto:
+            print('-------------------------------------------------------------------------')
 
         #second round is listed, now needs formatting
     for n in range(len(second_round)):
@@ -278,7 +251,8 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
 
     for division_number in range(len(second_round)):
         for match in second_round[division_number]:
-            print('Matchup: {} vs. {}'.format(match[0], match[1]))
+            if not auto:
+                print('Matchup: {} vs. {}'.format(match[0], match[1]))
 
             #simulate matchup from both sides and put in one list, find mean
             res=matchup(match[0],match[1], strategy, reps, model=model)
@@ -292,15 +266,19 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
                 res=matchup(match[0],match[1], strategy, model=model)
                 winners=res[0][0]>res[0][1]
             if winners > 0.5:
-                print('{} wins'.format(match[0]))
+                if not auto:
+                    print('{} wins'.format(match[0]))
                 third_round[division_number].append(match[0])
                 winner_list.append(match[0])
             else:
-                print('{} wins'.format(match[1]))
+                if not auto:
+                    print('{} wins'.format(match[1]))
                 third_round[division_number].append(match[1])
                 winner_list.append(match[1])
-            print()
-        print('----------------------------------------------------------------')
+            if not auto:
+                print()
+        if not auto:
+            print('----------------------------------------------------------------')
 
     #third round is listed, now needs formatting
     for n in range(len(third_round)):
@@ -316,7 +294,8 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
 
     for division_number in range(len(third_round)):
         for match in third_round[division_number]:
-            print('Matchup: {} vs. {}'.format(match[0], match[1]))
+            if not auto:
+                print('Matchup: {} vs. {}'.format(match[0], match[1]))
 
             #simulate matchup from both sides and put in one list, find mean
             res=matchup(match[0],match[1], strategy, reps, model=model)
@@ -330,20 +309,25 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
                 res=matchup(match[0],match[1], strategy, model=model)
                 winners=res[0][0]>res[0][1]
             if winners > 0.5:
-                print('{} wins'.format(match[0]))
+                if not auto:
+                    print('{} wins'.format(match[0]))
                 fourth_round[division_number].append(match[0])
                 winner_list.append(match[0])
             else:
-                print('{} wins'.format(match[1]))
+                if not auto:
+                    print('{} wins'.format(match[1]))
                 fourth_round[division_number].append(match[1])
                 winner_list.append(match[1])
-            print()
-        print('------------------------------------------------------------------')
+            if not auto:
+                print()
+        if not auto:
+            print('------------------------------------------------------------------')
 
 
     final_four = []
     for match in fourth_round:
-        print('Matchup: {} vs. {}'.format(match[0], match[1]))
+        if not auto:
+            print('Matchup: {} vs. {}'.format(match[0], match[1]))
 
         #simulate matchup from both sides and put in one list, find mean
         res=matchup(match[0],match[1], strategy, reps, model=model)
@@ -357,20 +341,24 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
             res=matchup(match[0],match[1], strategy, model=model)
             winners=res[0][0]>res[0][1]
         if winners > 0.5:
-            print('{} wins'.format(match[0]))
+            if not auto:
+                print('{} wins'.format(match[0]))
             final_four.append(match[0])
             winner_list.append(match[0])
         else:
-            print('{} wins'.format(match[1]))
+            if not auto:
+                print('{} wins'.format(match[1]))
             final_four.append(match[1])
             winner_list.append(match[1])
-        print()
+        if not auto:
+            print()
 
     #FINAL FOUR
     finals=[]
     team_A = final_four[0]
     team_B = final_four[1]
-    print('Matchup: {} vs. {}'.format(team_A, team_B))
+    if not auto:
+        print('Matchup: {} vs. {}'.format(team_A, team_B))
 
     #simulate matchup from both sides and put in one list, find mean
     res=matchup(team_A,team_B, strategy, reps, model=model)
@@ -384,18 +372,22 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
         res=matchup(team_A,team_B,strategy, model=model)
         winners=res[0][0]>res[0][1]
     if winners > 0.5:
-        print('{} wins'.format(team_A))
+        if not auto:
+            print('{} wins'.format(team_A))
         finals.append(team_A)
         winner_list.append(team_A)
     else:
-        print('{} wins'.format(team_B))
+        if not auto:
+            print('{} wins'.format(team_B))
         finals.append(team_B)
         winner_list.append(team_B)
-    print()
+    if not auto:
+        print()
 
     team_A = final_four[2]
     team_B = final_four[3]
-    print('Matchup: {} vs. {}'.format(team_A, team_B))
+    if not auto:
+        print('Matchup: {} vs. {}'.format(team_A, team_B))
 
     #simulate matchup from both sides and put in one list, find mean
     res=matchup(team_A,team_B, strategy, reps, model=model)
@@ -409,20 +401,24 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
         res=matchup(team_A,team_B, strategy, model=model)
         winners=res[0][0]>res[0][1]
     if winners > 0.5:
-        print('{} wins'.format(team_A))
+        if not auto:
+            print('{} wins'.format(team_A))
         finals.append(team_A)
         winner_list.append(team_A)
     else:
-        print('{} wins'.format(team_B))
+        if not auto:
+            print('{} wins'.format(team_B))
         finals.append(team_B)
         winner_list.append(team_B)
-    print()
+    if not auto:
+        print()
 
 
 
     total_reps=reps*2
     total_ou = 0
-    print('Matchup: {} vs. {}'.format(finals[0], finals[1]))
+    if not auto:
+        print('Matchup: {} vs. {}'.format(finals[0], finals[1]))
 
     #simulate matchup from both sides and put in one list, find mean
     res=matchup(finals[0],finals[1], strategy, reps, model=model)
@@ -445,11 +441,14 @@ def simulate_tournament(strategy='sim', reps=10, auto=False, model=None):
         total_reps+=1
         winners=res[0][0]>res[0][1]
     if winners > 0.5:
-        print('{} wins'.format(finals[0]))
+        if not auto:
+            print('{} wins'.format(finals[0]))
         winner_list.append(finals[0])
     else:
-        print('{} wins'.format(finals[1]))
+        if not auto:
+            print('{} wins'.format(finals[1]))
         winner_list.append(finals[1])
-    print()
-    print('Tiebreaker O/U: {}'.format(total_ou//total_reps))
+    if not auto:
+        print()
+        print('Tiebreaker O/U: {}'.format(total_ou//total_reps))
     return winner_list
