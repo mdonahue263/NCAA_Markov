@@ -1,67 +1,33 @@
-"# NCAA_Markov" 
+This is a project started in 2024 to try to model the flow of NCAA men's basketball games as transitions between states in a Markov Chain-esque way.
 
-Roadmap
-Find data endpoint for play-by-play and roster
+The general idea is based on this brief paper https://www.nessis.org/nessis07/Kenny_Shirley.pdf.
 
-Write functions to pull and process those data
+The paper describes a model where the states are defined as a combination of 3 things:
+1. Which team has possession
+2. How that team gained possession
+3. The number of points on the previous play
 
-Create very small markov model on one game without player data, just time and scores
+The paper demonstrates a maximum of 40 states, then reduces the number to 30 based on some impossible states. For example, a scoring play cannot result in a "Steal," so a steal can only happen on a 0-point play.
 
-run simulation of game with that model
+These 30 states are demnstrated visually in the graphic Shirley_30_states.png
 
-add starting player data and repeat
+In my model, I further simplify the state space by eliminating states that are effectively redundant for the outcome of a game. For example, I eliminate the "Steal" category by considering a "Steal" to be identical to a "Defensive Rebound."
 
-pull multiple games in the order of 10-100 and train the model on that
+I further reduce the state space by considering "offensive rebounds" and "defensive rebounds" redundant; the information of which team made the rebound is captured by the indication of which team now has possession.
 
-create matchup that did not exist in training data and simulate that
+These reductions result in the model I used as the starting point for the project, which has 18 states and can be seen in the graphic Donahue_18_States.png.
 
-write functions to process the possibility of player substitutions
+After creating this framework with which to describe the events of a game, I chose a single game to test the framework by hand.
 
+To identify what resource I would use for this, I scrolled through various sports data websites to find the most easily accessible play-by-play data, and I found that on NCAA's website. I found that the play-by-play data is available via a "hidden API" endpoint that delivers a simple JSON version of the play-by-play data, so I use that later, but for now, I simply pasted the play-by-play description of a single game into excel. I used the game from 2/7/2024, LSU at Tennessee, which has game ID 6200293 on NCAA's website.
 
+You can see the sample labeling of each play in the excel workbook Outline_and_Sample.xlsx, in the Sample tab. For each line of the play-by-play score, I tried to identify a "Previous State" and a "New State" that each fell into one of the 18 defined states from above. In many cases, the play-by-play line had a description that did not fit any, but was not relevant to the score of the game, so it was labeled "UNNECESSARY" instead of a state. For example, missed shots are followed by rebounds or inbounds, and we do not need a separate state for missed shot and rebound. 
 
+To illustrate the first few lines of the sample game, I labeled Tennessee as team A and LSU as team B. The first play is a "Foul on LSU", followed by a "Free throw Good" by Tennessee. This can be represented as starting with a Tennessee inbound (Ai0), followed by a Tennessee Free Throw after no score (Af0), followed by a Tennessee Free Throw after 1 point (Af1).
 
-NOTES
-2/16/2024
-The logic written out in translate_game was applied to the first sample game
+I continue labeling the play-by-play data of the first sample game to ensure that the previously defined 18 states would be sufficient to capture the flow of the entire game. After ensuring this was true for a few more games, I began to map out some logic to automatically process the play-by-play data for each game.
 
-It was refined using second sample game and moved into game_states_logic.py
-Shortcomings still exist which are we don't have a starting state and we don't have auto-detect team A and team B
+For the most simple breakdown of how I approached this logic, see the Rules tab of the Outline_and_Sample.xlsx workbook. Some of the most simple parts of the logic were disregarding all lines where a shot was MISSED, in favor of using the following line's information. This works because a MISS is typically followed by a Rebound or Inbound.
 
-Going to open a new notebook to test a third sample game and add logic to detect starting state and auto detect team A and team B
-During this time, will also add pulling game logic to a PY file so we can pull and test game in same notebook 
+NOTE: This logic is crude and manual and still a work in progress. Accounting for every possible play-by-play line is difficult, and there are many "exceptions" and mislabeled data in practice. This should be a point of focus in future iterations, because this is cause for a lot of bad data (impossible transitions pop up, scores are missed, etc.)
 
-Third game worked without a hitch - labeled manually and then ran logic and all matched (except on plays where Foul is followed by Turnover at same timestamp, where logic says it's Bi0 then Br0. That's fine, just leave it)
-
-NOTES 2/18/2024
-Don't use:
-#UTRVG? 506558?
-#North American? 536?
-#Army West Point vs ANY
-#NC A&T vs T
-#Vanguard 30135
-#Wittenburg FW
-#Navajo Tech 506563
-#Bob Jones XXXXXX
-#Texas A&M is M?
-#Warren Wilson 30236
-#Carolina Christian 506565
-#stanton 506567
-#edward waters 30244
-#new college FL - 506568
-#UNT Dallas 506547
-#Coker USCU?
-#error with game 6198622
-
-3/9/2024
-REMINDER - process for pulling in new games
-1. open save_down_all_games
-2. poke around on ncaa to find new limit of game indices
-3. run save_down_all_games with new indices
-4. open save_valid_transitinos_expanded
-5. ensure pulling latest ALL VALID TRANSITIONS file
-6. run PROCESS NEW GAMES cell and make necessary changes to game files
-7. save down as new version of ALL VALID TRANSITIONS
-8. Open save_valid_transition_times_expanded
-9. run and save new version of output
-10. open all_individual_team_stats latest version
-11. Run - this will re save each team's data. not optimized to check if teams have new data. That's okay.
